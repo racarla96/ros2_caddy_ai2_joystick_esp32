@@ -1,0 +1,24 @@
+#######################################
+# Syntax Coloring Map for TFMPlus
+# Date: 20200701
+# Note: Separate terms with TABs
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+PWMReader	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+begin	KEYWORD2
+getDutyCicle_us	KEYWORD2
+getPeriod_us	KEYWORD2
+getTimeLastRisingEdge_us KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################
