@@ -27,14 +27,32 @@ PWMReader ch4;
 PWMReader ch5;
 PWMReader ch6;
 
+// Definir las constantes para los canales
+const int C_CH1[] = {1990, 1205, 1590, 1605};
+const int C_CH2[] = {1765, 1070, 1410, 1425};
+const int C_CH3[] = {1760, 1100};
+const int C_CH4[] = {1840, 1062, 1440, 1462};
+const int C_CH5[] = {1900, 1100};
+const int C_CH6[] = {1920, 1120};
+
+// Variables para los valores de los canales
+int raw_CH1, raw_CH2, raw_CH3, raw_CH4, raw_CH5, raw_CH6;
+
+float m1, m2, m3, m4, m5, m6;
+int sat1_CH1, sat1_CH2, sat1_CH4;
+int sat2_CH1, sat2_CH2, sat2_CH4;
+int sat_CH3, sat_CH5, sat_CH6;
+float u1_CH1, u2_CH1, u1_CH2, u2_CH2, u1_CH4, u2_CH4;
+float u_CH1, u_CH2, u_CH3, u_CH4, u_CH5, u_CH6;
+
 #if !defined(MICRO_ROS_TRANSPORT_ARDUINO_SERIAL)
 #error This example is only avaliable for Arduino framework with serial transport.
 #endif
 
 int period_ms = 20;
 
-struct timespec tv = {0};
-String frame_id = "joy_link";
+struct timespec ts;
+char frame_id[] = "joy_link";
 rcl_publisher_t publisher;
 sensor_msgs__msg__Joy msg;
 
@@ -44,34 +62,100 @@ rcl_allocator_t allocator;
 rcl_node_t node;
 rcl_timer_t timer;
 
-#define RCCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){error_loop();}}
+#define RCCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){return false;}}
 #define RCSOFTCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){}}
+#define EXECUTE_EVERY_N_MS(MS, X)  do { \
+  static volatile int64_t init = -1; \
+  if (init == -1) { init = uxr_millis();} \
+  if (uxr_millis() - init > MS) { X; init = uxr_millis();} \
+} while (0)\
+
+enum states {
+  WAITING_AGENT,
+  AGENT_AVAILABLE,
+  AGENT_CONNECTED,
+  AGENT_DISCONNECTED
+} state;
 
 // Error handle loop
 void error_loop() {
-  bool state = true;
+  bool led_state = true;
   while(1){
-    if(state) {digitalWrite(LED, HIGH); state = false;}
-    else {digitalWrite(LED, LOW); state = true;}
+    if(led_state) {digitalWrite(LED, HIGH); led_state = false;}
+    else {digitalWrite(LED, LOW); led_state = true;}
     delay(100);
   }
+}
+
+float calcularPendiente(int maxVal, int minVal) {
+    return abs(maxVal - minVal);
+}
+
+int saturar(int valor, int maxVal, int minVal) {
+    valor = min(valor, maxVal);
+    valor = max(valor, minVal);
+    return valor;
+}
+
+float normalizar(int valor, int offset, float pendiente) {
+    return (1.0 / pendiente) * (valor - offset);
 }
 
 void timer_callback(rcl_timer_t * timer, int64_t last_call_time) {
   RCLC_UNUSED(last_call_time);
   if (timer != NULL) {
 
-    clock_gettime(0, &tv);
-    msg.header.stamp.sec = tv.tv_sec;
-    msg.header.stamp.nanosec = tv.tv_nsec;
-    //msg.header.frame_id = frame_id;
-    
-    msg.axes.data[0] = ch1.getDutyCicle_us();
-    msg.axes.data[1] = ch2.getDutyCicle_us();
-    msg.axes.data[2] = ch3.getDutyCicle_us();
-    msg.axes.data[3] = ch4.getDutyCicle_us();
-    msg.axes.data[4] = ch5.getDutyCicle_us();
-    msg.axes.data[5] = ch6.getDutyCicle_us();
+    clock_gettime(CLOCK_REALTIME, &ts);
+    msg.header.stamp.sec = ts.tv_sec;
+    msg.header.stamp.nanosec = ts.tv_nsec;
+    //msg.header.frame_id.data = frame_id;
+
+    raw_CH1 = ch1.getDutyCicle_us();
+    raw_CH2 = ch2.getDutyCicle_us();
+    raw_CH3 = ch3.getDutyCicle_us();
+    raw_CH4 = ch4.getDutyCicle_us();
+    raw_CH5 = ch5.getDutyCicle_us();
+    raw_CH6 = ch6.getDutyCicle_us();
+
+    // Saturar y normalizar los valores para CH1
+    sat1_CH1 = saturar(raw_CH1, C_CH1[0], C_CH1[3]);
+    sat2_CH1 = saturar(raw_CH1, C_CH1[2], C_CH1[1]);
+    u1_CH1 = normalizar(sat1_CH1, C_CH1[3], m1);
+    u2_CH1 = normalizar(sat2_CH1, C_CH1[2], m1);
+    u_CH1 = -1 * (u1_CH1 + u2_CH1);
+
+    // Saturar y normalizar los valores para CH2
+    sat1_CH2 = saturar(raw_CH2, C_CH2[0], C_CH2[3]);
+    sat2_CH2 = saturar(raw_CH2, C_CH2[2], C_CH2[1]);
+    u1_CH2 = normalizar(sat1_CH2, C_CH2[3], m2);
+    u2_CH2 = normalizar(sat2_CH2, C_CH2[2], m2);
+    u_CH2 = u1_CH2 + u2_CH2;
+
+    // Saturar y normalizar los valores para CH3
+    sat_CH3 = saturar(raw_CH3, C_CH3[0], C_CH3[1]);
+    u_CH3 = normalizar(sat_CH3, C_CH3[1], m3);
+
+    // Saturar y normalizar los valores para CH4
+    sat1_CH4 = saturar(raw_CH4, C_CH4[0], C_CH4[3]);
+    sat2_CH4 = saturar(raw_CH4, C_CH4[2], C_CH4[1]);
+    u1_CH4 = normalizar(sat1_CH4, C_CH4[3], m4);
+    u2_CH4 = normalizar(sat2_CH4, C_CH4[2], m4);
+    u_CH4 = u1_CH4 + u2_CH4;
+
+    // Saturar y normalizar los valores para CH5
+    sat_CH5 = saturar(raw_CH5, C_CH5[0], C_CH5[1]);
+    u_CH5 = normalizar(sat_CH5, C_CH5[1], m5);
+
+    // Saturar y normalizar los valores para CH6
+    sat_CH6 = saturar(raw_CH6, C_CH6[0], C_CH6[1]);
+    u_CH6 = normalizar(sat_CH6, C_CH6[1], m6);
+
+    msg.axes.data[0] = u_CH1;
+    msg.axes.data[1] = u_CH2;
+    msg.axes.data[2] = u_CH3;
+    msg.axes.data[3] = u_CH4;
+    msg.axes.data[4] = u_CH5;
+    msg.axes.data[5] = u_CH6;
 
     msg.buttons.data[0] = ch1.isEnable();
     msg.buttons.data[1] = ch2.isEnable();
@@ -84,18 +168,23 @@ void timer_callback(rcl_timer_t * timer, int64_t last_call_time) {
   }
 }
 
-void setup() {
-  // Configure serial transport
-  Serial.begin(115200);
-  set_microros_serial_transports(Serial);
-  delay(2000);
+bool create_entities() {
+  if (!ch1.begin(CH1)) return false;
+  if (!ch2.begin(CH2)) return false;
+  if (!ch3.begin(CH3)) return false;
+  if (!ch4.begin(CH4)) return false;
+  if (!ch5.begin(CH5)) return false;
+  if (!ch6.begin(CH6)) return false;
 
-  if (!ch1.begin(CH1)) error_loop();
-  if (!ch2.begin(CH2)) error_loop();
-  if (!ch3.begin(CH3)) error_loop();
-  if (!ch4.begin(CH4)) error_loop();
-  if (!ch5.begin(CH5)) error_loop();
-  if (!ch6.begin(CH6)) error_loop();
+  m1 = calcularPendiente(C_CH1[0], C_CH1[3]);
+  m2 = calcularPendiente(C_CH2[0], C_CH2[3]);
+  m3 = calcularPendiente(C_CH3[0], C_CH3[1]);
+  m4 = calcularPendiente(C_CH4[0], C_CH4[3]);
+  m5 = calcularPendiente(C_CH5[0], C_CH5[1]);
+  m6 = calcularPendiente(C_CH6[0], C_CH6[1]);
+
+  msg.header.frame_id.data = frame_id;
+  msg.header.frame_id.size = strlen(msg.header.frame_id.data);
 
   allocator = rcl_get_default_allocator();
 
@@ -133,9 +222,60 @@ void setup() {
   msg.buttons.capacity = 6;
   msg.buttons.data = buttons;
   msg.buttons.size = 6;
+
+  return true;
+}
+
+void destroy_entities()
+{
+  rmw_context_t * rmw_context = rcl_context_get_rmw_context(&support.context);
+  (void) rmw_uros_set_context_entity_destroy_session_timeout(rmw_context, 0);
+
+  rcl_publisher_fini(&publisher, &node);
+  rcl_timer_fini(&timer);
+  rclc_executor_fini(&executor);
+  rcl_node_fini(&node);
+  rclc_support_fini(&support);
+}
+
+void setup() {
+  // Configure serial transport
+  Serial.begin(115200);
+  pinMode(LED, OUTPUT);
+  set_microros_serial_transports(Serial);
+  delay(2000);
+
+  state = WAITING_AGENT;
 }
 
 void loop() {
-  delay(period_ms/2);
-  RCSOFTCHECK(rclc_executor_spin_some(&executor, RCL_MS_TO_NS(period_ms)));
+  switch (state) {
+    case WAITING_AGENT:
+      EXECUTE_EVERY_N_MS(4000, state = (RMW_RET_OK == rmw_uros_ping_agent(100, 1)) ? AGENT_AVAILABLE : WAITING_AGENT;);
+      break;
+    case AGENT_AVAILABLE:
+      state = (true == create_entities()) ? AGENT_CONNECTED : WAITING_AGENT;
+      if (state == WAITING_AGENT) {
+        destroy_entities();
+      };
+      break;
+    case AGENT_CONNECTED:
+      EXECUTE_EVERY_N_MS(200, state = (RMW_RET_OK == rmw_uros_ping_agent(period_ms, 1)) ? AGENT_CONNECTED : AGENT_DISCONNECTED;);
+      if (state == AGENT_CONNECTED) {
+        rclc_executor_spin_some(&executor, RCL_MS_TO_NS(period_ms));
+      }
+      break;
+    case AGENT_DISCONNECTED:
+      destroy_entities();
+      state = WAITING_AGENT;
+      break;
+    default:
+      break;
+  }
+
+  if (state == AGENT_CONNECTED) {
+    digitalWrite(LED, 1);
+  } else {
+    digitalWrite(LED, 0);
+  }
 }
