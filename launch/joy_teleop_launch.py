@@ -13,7 +13,7 @@ def generate_launch_description():
     joy_config = launch.substitutions.LaunchConfiguration('joy_teleop.config')
     config_filepath = launch.substitutions.LaunchConfiguration('config_filepath')
 
-    joy_launch_file_dir = os.path.join(get_package_share_directory('nav2_bringup'), 'launch')
+    joy_launch_file_dir = os.path.join(get_package_share_directory('joystick_bridge'), 'launch')
 
     usb_device_dir = LaunchConfiguration('usb_device', default='/dev/ttyUSB0')
 
