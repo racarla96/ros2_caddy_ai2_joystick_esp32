@@ -16,7 +16,7 @@ def generate_launch_description():
     # Create the command to run the Docker container with the substitution
     docker_command = [
         'docker', 'stop', '$(docker ps --quiet --filter ancestor=microros/micro-ros-agent:humble)',
-        '&&'
+        '&&',
         'docker', 'run', '--rm', 
         '-v', '/dev:/dev', 
         '-v', '/dev/shm:/dev/shm', 
