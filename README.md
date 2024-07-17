@@ -5,7 +5,7 @@
 
 Es un sencillo ejemplo de como conectar una radio RC a ROS 2 (Humble) usando micro-ROS junto a un ESP32 como microcontrolador (MCU) empleando vscode y platformio.
 
-Genera un topic llamado "/joystick" con un tipo de mensaje "sensor_msgs/Joy" con 6 axis, uno para cada canal del mando y un conjunto de botones indicando si esta o no la radio conectada. Tiene una frecuencia de funcionamiento de 50 Hz, dada por el mando y el esp32.
+Genera un topic llamado "/joy" con un tipo de mensaje "sensor_msgs/Joy" con 6 axis, uno para cada canal del mando y un conjunto de botones indicando si esta o no la radio conectada. Tiene una frecuencia de funcionamiento de 50 Hz, dada por el mando y el esp32.
 
 El proceso de calibración se ha realizado utilizando un live script de Matlab (R2023b) en el cuál se distinguen dos tipos de canales, unos completamente lineales con un máximo y un mínimo y otros con un centro y zona muerta con la misma ganancia para la parte superior e inferior del canal. Veáse el calibración.pdf para más información.
 
