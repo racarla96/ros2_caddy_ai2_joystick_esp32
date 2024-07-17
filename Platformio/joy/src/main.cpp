@@ -108,7 +108,6 @@ void timer_callback(rcl_timer_t * timer, int64_t last_call_time) {
     clock_gettime(CLOCK_REALTIME, &ts);
     msg.header.stamp.sec = ts.tv_sec;
     msg.header.stamp.nanosec = ts.tv_nsec;
-    //msg.header.frame_id.data = frame_id;
 
     raw_CH1 = ch1.getDutyCicle_us();
     raw_CH2 = ch2.getDutyCicle_us();
@@ -158,11 +157,6 @@ void timer_callback(rcl_timer_t * timer, int64_t last_call_time) {
     msg.axes.data[5] = u_CH6;
 
     msg.buttons.data[0] = ch1.isEnable();
-    msg.buttons.data[1] = ch2.isEnable();
-    msg.buttons.data[2] = ch3.isEnable();
-    msg.buttons.data[3] = ch4.isEnable();
-    msg.buttons.data[4] = ch5.isEnable();
-    msg.buttons.data[5] = ch6.isEnable();  
 
     RCSOFTCHECK(rcl_publish(&publisher, &msg, NULL));
   }
@@ -199,7 +193,7 @@ bool create_entities() {
     &publisher,
     &node,
     ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, Joy),
-    "joystick")); // micro_ros_joystick_esp32_radio_bridge_node_publisher
+    "joy")); // micro_ros_joystick_esp32_radio_bridge_node_publisher
 
   // create timer,
   const unsigned int timer_period = period_ms; // ms
@@ -218,10 +212,10 @@ bool create_entities() {
   msg.axes.capacity = 6;
   msg.axes.data = axes;
   msg.axes.size = 6;
-  static int32_t buttons[6];
-  msg.buttons.capacity = 6;
+  static int32_t buttons[1];
+  msg.buttons.capacity = 1;
   msg.buttons.data = buttons;
-  msg.buttons.size = 6;
+  msg.buttons.size = 1;
 
   return true;
 }

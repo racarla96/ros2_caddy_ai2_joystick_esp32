@@ -49,7 +49,7 @@ sudo usermod -a -G dialout $USER
 
 Visualizar la salida
 ```bash
-ros2 topic echo /joystick
+ros2 topic echo /joy
 ```
 ### Pendiente:
 
