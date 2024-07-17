@@ -1,3 +1,17 @@
+
+
+/**
+ * @file main.cpp
+ * @brief This file contains the main code for the ROS2 Caddy AI2 Joystick ESP32 Radio Bridge.
+ * 
+ * The code initializes the necessary entities for communication with a micro-ROS agent and a joystick.
+ * It reads the PWM values from the joystick channels, saturates and normalizes them, and publishes the values as a sensor_msgs/Joy message.
+ * The code also handles the connection and disconnection with the micro-ROS agent.
+ * 
+ * The main loop of the code checks the state of the connection with the agent and performs the necessary actions accordingly.
+ * 
+ * This code is specific to the Arduino framework with serial transport.
+ */
 #include <Arduino.h>
 #include <micro_ros_platformio.h>
 #include <string.h>

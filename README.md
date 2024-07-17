@@ -28,6 +28,12 @@ Asignar permisos al usuario actual
 sudo usermod -aG docker $USER
 ```
 
+## Instalación de paquetes adicionales
+
+```bash
+sudo apt-get install ros-humble-teleop-twist-joy
+```
+
 ### Para ejecutar interactivamente el docker con el agente de micro-ros y poder ver el topic en ROS 2
 
 ```bash

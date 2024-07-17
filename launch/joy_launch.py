@@ -15,7 +15,7 @@ def generate_launch_description():
 
     # Create the command to run the Docker container with the substitution
     docker_command = [
-        'docker', 'run', '-it', '--rm', 
+        'docker', 'run', '--rm', 
         '-v', '/dev:/dev', 
         '-v', '/dev/shm:/dev/shm', 
         '--privileged', '--net=host', 
