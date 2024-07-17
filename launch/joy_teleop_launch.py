@@ -18,7 +18,8 @@ def generate_launch_description():
     usb_device_dir = LaunchConfiguration('usb_device', default='/dev/ttyUSB0')
 
     return launch.LaunchDescription([
-        launch.actions.DeclareLaunchArgument('joy_vel', default_value='cmd_vel'),        
+        launch.actions.DeclareLaunchArgument('joy_vel', default_value='cmd_vel'), 
+        launch.actions.DeclareLaunchArgument('joy_config', default_value='joy_teleop.config'),       
         launch.actions.DeclareLaunchArgument('config_filepath', default_value=[
             launch.substitutions.TextSubstitution(text=os.path.join(
                 get_package_share_directory('joystick_bridge'), 'config', '')),
