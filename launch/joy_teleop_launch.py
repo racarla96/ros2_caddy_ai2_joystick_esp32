@@ -10,7 +10,7 @@ from launch.substitutions import LaunchConfiguration
 
 
 def generate_launch_description():
-    joy_config = launch.substitutions.LaunchConfiguration('joy_teleop.config')
+    joy_config = launch.substitutions.LaunchConfiguration('joy_teleop')
     config_filepath = launch.substitutions.LaunchConfiguration('config_filepath')
 
     joy_launch_file_dir = os.path.join(get_package_share_directory('joystick_bridge'), 'launch')
@@ -19,7 +19,7 @@ def generate_launch_description():
 
     return launch.LaunchDescription([
         launch.actions.DeclareLaunchArgument('joy_vel', default_value='cmd_vel'), 
-        launch.actions.DeclareLaunchArgument('joy_config', default_value='joy_teleop.config'),       
+        launch.actions.DeclareLaunchArgument('joy_config', default_value='joy_teleop'),       
         launch.actions.DeclareLaunchArgument('config_filepath', default_value=[
             launch.substitutions.TextSubstitution(text=os.path.join(
                 get_package_share_directory('joystick_bridge'), 'config', '')),
