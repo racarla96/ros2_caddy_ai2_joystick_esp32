@@ -58,6 +58,7 @@ int sat2_CH1, sat2_CH2, sat2_CH4;
 int sat_CH3, sat_CH5, sat_CH6;
 float u1_CH1, u2_CH1, u1_CH2, u2_CH2, u1_CH4, u2_CH4;
 float u_CH1, u_CH2, u_CH3, u_CH4, u_CH5, u_CH6;
+int turbo = 0;
 
 #if !defined(MICRO_ROS_TRANSPORT_ARDUINO_SERIAL)
 #error This example is only avaliable for Arduino framework with serial transport.
@@ -170,7 +171,14 @@ void timer_callback(rcl_timer_t * timer, int64_t last_call_time) {
     msg.axes.data[4] = u_CH5;
     msg.axes.data[5] = u_CH6;
 
+    if(u_CH6 > 0.5) {
+      turbo = 1;
+    } else {
+      turbo = 0;
+    }
+
     msg.buttons.data[0] = ch1.isEnable();
+    msg.buttons.data[1] = turbo;
 
     RCSOFTCHECK(rcl_publish(&publisher, &msg, NULL));
   }
@@ -226,10 +234,10 @@ bool create_entities() {
   msg.axes.capacity = 6;
   msg.axes.data = axes;
   msg.axes.size = 6;
-  static int32_t buttons[1];
-  msg.buttons.capacity = 1;
+  static int32_t buttons[2];
+  msg.buttons.capacity = 2;
   msg.buttons.data = buttons;
-  msg.buttons.size = 1;
+  msg.buttons.size = 2;
 
   return true;
 }
